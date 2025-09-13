@@ -1,5 +1,11 @@
 package co.com.poo.shoppingcart.usecase;
 
+import co.com.poo.shoppingcart.model.Product;
+import co.com.poo.shoppingcart.service.ProductRepository;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class ProductCatalogUseCase {
     private final ProductRepository productRepository;
     

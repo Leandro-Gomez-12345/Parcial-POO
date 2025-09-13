@@ -1,5 +1,11 @@
 package co.com.poo.shoppingcart.usecase;
 
+import co.com.poo.shoppingcart.model.Cart;
+import co.com.poo.shoppingcart.model.CartItem;
+import co.com.poo.shoppingcart.model.Product;
+import co.com.poo.shoppingcart.service.CartRepository;
+import co.com.poo.shoppingcart.service.ProductRepository;
+
 public class ShoppingCartUseCase {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
@@ -18,6 +24,19 @@ public class ShoppingCartUseCase {
         }
     }
     
-    // Implementar los demás métodos según el diagrama
-    // updateQuantity, removeItem, viewCart, etc.
+    public void updateQuantity(String productId, Integer quantity) {
+        Cart cart = cartRepository.getCart();
+        cart.updateItem(productId, quantity);
+        cartRepository.saveCart(cart);
+    }
+    
+    public void removeItem(String productId) {
+        Cart cart = cartRepository.getCart();
+        cart.removeItem(productId);
+        cartRepository.saveCart(cart);
+    }
+    
+    public Cart viewCart() {
+        return cartRepository.getCart();
+    }
 }
