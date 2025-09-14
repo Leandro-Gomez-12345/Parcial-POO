@@ -22,7 +22,7 @@ public class Cart {
     }
 
     public void removeItem(String productId) {
-        items.removeIf(i -> i.getProductId().equals(productId));
+        items.removeIf(i -> i.getProductId().equals(Integer.parseInt(productId)));
         calculateTotal();
     }
 
@@ -32,7 +32,7 @@ public class Cart {
             return;
         }
         for (CartItem item : items) {
-            if (item.getProductId().equals(productId)) {
+            if (item.getProductId().equals(Integer.parseInt(productId))) {
                 item.setQuantity(quantity);
                 break;
             }
