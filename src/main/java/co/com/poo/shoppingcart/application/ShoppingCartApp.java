@@ -38,12 +38,21 @@ public class ShoppingCartApp {
         while (activo) {
             System.out.println("\n1. Ver productos\n2. Añadir producto al carrito\n3. Ver carrito\n" +
                            "4. Actualizar cantidad\n5. Eliminar producto\n6. Crear orden\n7. Ver orden\n8. Salir");
-            System.out.print("Seleccione una opción: ");
+
+            int opcion = 0;
+            while (true){
+                try {
+                    System.out.print("Seleccione una opción: ");
+                    opcion = scanner.nextInt();
+                    scanner.nextLine(); // Consumir el salto de línea
+                    break; // Salir del bucle si la entrada es válida
+                } catch (Exception e) {
+                    System.out.println("Entrada invalida. Por favor ingrese un numero.");
+                    scanner.nextLine(); // Limpiar el buffer del scanner
+                }
+            }
             
-            int option = scanner.nextInt();
-            scanner.nextLine(); // Consumir el salto de línea
-            
-            switch (option) {
+            switch (opcion) {
                 case 1:
                     System.out.println("\nProductos disponibles:");
                     productCatalogUseCase.getProductList().forEach(p -> 
