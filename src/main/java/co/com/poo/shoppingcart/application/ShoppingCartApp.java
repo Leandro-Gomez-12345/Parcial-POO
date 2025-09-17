@@ -39,7 +39,8 @@ public class ShoppingCartApp {
             System.out.println("\n1. Ver productos\n2. Añadir producto al carrito\n3. Ver carrito\n" +
                            "4. Actualizar cantidad\n5. Eliminar producto\n6. Crear orden\n7. Ver orden\n8. Salir");
 
-            int opcion = 0;
+            int opcion;
+            // Se pide la opcion al usuario y se verifica que sea un numero entero
             while (true){
                 try {
                     System.out.print("Seleccione una opción: ");
@@ -62,10 +63,30 @@ public class ShoppingCartApp {
                 case 2:
                     System.out.print("Ingrese ID del producto: ");
                     String productId = scanner.nextLine();
-                    System.out.print("Ingrese cantidad: ");
-                    int quantity = scanner.nextInt();
-                    shoppingCartUseCase.addProductToCart(productId, quantity);
-                    System.out.println("Producto añadido al carrito.");
+                    // Se una un try y catch para verificar que el usuario ingrese un valor valido
+                    try {
+                        // Se intenta convertir el ID del producto a entero, si no puede va a la parte del catch
+                        int id = Integer.parseInt(productId);
+                        // Como solo hay productos del 1 al 15, si el ID está fuera de este rango se muestra un mensaje de error
+                        if (id >= 1 && id <= 15) {
+                            int quantity;
+                            // Se pide la cantidad al usuario y se verifica que sea mayor a 0
+                            do {
+                                System.out.print("Ingrese cantidad: ");
+                                quantity = scanner.nextInt();
+                                scanner.nextLine(); // Consumir salto de línea
+                                if (quantity <= 0) {
+                                    System.out.println("La cantidad debe ser mayor a 0.");
+                                }
+                            } while (quantity <= 0);
+                            shoppingCartUseCase.addProductToCart(productId, quantity);
+                            System.out.println("Producto añadido al carrito.");
+                        } else {
+                            System.out.println("El ID debe estar entre 1 y 15.");
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Solo puedes ingresar un numero valido");
+                    }
                     break;
                 case 3:
                     System.out.println("\nCarrito actual:");
