@@ -40,7 +40,7 @@ public class ShoppingCartUseCase {
         return cartRepository.getCart();
     }
 
-    // Nuevo método para limpiar el carrito
+    // Nuevo metodo para limpiar el carrito
     public void clearCart() {
         Cart cart = cartRepository.getCart();
         cart.clear();
