@@ -29,48 +29,24 @@ public class Order {
         return orderId;
     }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
-
     public Date getDate() {
         return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
     }
 
     public List<CartItem> getItems() {
         return items;
     }
 
-    public void setItems(List<CartItem> items) {
-        this.items = items;
-    }
-
     public Double getSubtotal() {
         return subtotal;
-    }
-
-    public void setSubtotal(Double subtotal) {
-        this.subtotal = subtotal;
     }
 
     public Double getDiscount() {
         return discount;
     }
 
-    public void setDiscount(Double discount) {
-        this.discount = discount;
-    }
-
     public Double getFinalTotal() {
         return finalTotal;
-    }
-
-    public void setFinalTotal(Double finalTotal) {
-        this.finalTotal = finalTotal;
     }
 
     @Override

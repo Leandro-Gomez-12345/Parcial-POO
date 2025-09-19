@@ -63,8 +63,4 @@ public class Cart {
     public Double getTotalAmount() {
         return totalAmount;
     }
-
-    public Integer getItemCount() {
-        return items.size();
-    }
 }

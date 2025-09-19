@@ -33,8 +33,4 @@ public class OrderUseCase {
     public Order getOrder(String orderId) {
         return orders.get(orderId); // Obtenemos la orden del mapa interno
     }
-
-    public double calculateTotal(Order order) {
-        return order.getFinalTotal();
-    }
 }

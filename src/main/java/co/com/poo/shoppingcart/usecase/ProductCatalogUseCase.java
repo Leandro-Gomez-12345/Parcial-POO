@@ -20,10 +20,4 @@ public class ProductCatalogUseCase {
     public Product getProductById(String id) {
         return productRepository.getProductById(Integer.parseInt(id));
     }
-    
-    public List<Product> getProductsByCategory(String category) {
-        return productRepository.loadProducts().stream()
-                .filter(p -> p.getCategory().equals(category))
-                .collect(Collectors.toList());
-    }
 }
