@@ -4,322 +4,301 @@ import co.com.poo.shoppingcart.service.CartRepository;
 import co.com.poo.shoppingcart.service.InMemoryCartManager;
 import co.com.poo.shoppingcart.service.ProductRepository;
 import co.com.poo.shoppingcart.service.FileProductManager;
-import co.com.poo.shoppingcart.model.Order;
-import co.com.poo.shoppingcart.usecase.OrderUseCase;
-import co.com.poo.shoppingcart.usecase.ProductCatalogUseCase;
 import co.com.poo.shoppingcart.usecase.ShoppingCartUseCase;
+import co.com.poo.shoppingcart.usecase.ProductCatalogUseCase;
+import co.com.poo.shoppingcart.usecase.OrderUseCase;
+import co.com.poo.shoppingcart.model.Order;
+import co.com.poo.shoppingcart.model.Product;
 
-import java.text.SimpleDateFormat;
 import java.util.Scanner;
 
 public class ShoppingCartApp {
-    private static boolean orderClosed = false; // Para controlar si el pedido está cerrado
-
     public static void main(String[] args) {
         // Inicializar repositorios
         CartRepository cartRepository = InMemoryCartManager.getInstance();
         ProductRepository productRepository = FileProductManager.getInstance();
-
+        
         // Inicializar casos de uso
-        co.com.poo.shoppingcart.usecase.ShoppingCartUseCase shoppingCartUseCase = new co.com.poo.shoppingcart.usecase.ShoppingCartUseCase(cartRepository, productRepository);
+        ShoppingCartUseCase shoppingCartUseCase = new ShoppingCartUseCase(cartRepository, productRepository);
         ProductCatalogUseCase productCatalogUseCase = new ProductCatalogUseCase(productRepository);
         OrderUseCase orderUseCase = new OrderUseCase(cartRepository);
-
-        // Aquí podrías iniciar una interfaz de usuario simple
+        
+        // Iniciar la interfaz de consola
         startConsoleInterface(shoppingCartUseCase, productCatalogUseCase, orderUseCase);
     }
-
-    private static void startConsoleInterface(ShoppingCartUseCase shoppingCartUseCase,
-                                              ProductCatalogUseCase productCatalogUseCase,
-                                              OrderUseCase orderUseCase) {
+    
+    /**
+     * Inicia la interfaz de consola para interactuar con el sistema de carrito de compras
+     * @param shoppingCartUseCase Caso de uso para operaciones del carrito
+     * @param productCatalogUseCase Caso de uso para operaciones del catálogo de productos
+     * @param orderUseCase Caso de uso para operaciones de órdenes
+     */
+    private static void startConsoleInterface(ShoppingCartUseCase shoppingCartUseCase, 
+                                             ProductCatalogUseCase productCatalogUseCase,
+                                             OrderUseCase orderUseCase) {
         Scanner scanner = new Scanner(System.in);
         boolean activo = true;
         String currentOrderId = null; // Para almacenar el ID de la orden actual
-
+        boolean orderClosed = false; // Para controlar si ya se cerró el pedido
+        
         System.out.println("Bienvenido al Carrito de Compras");
-
+        
         while (activo) {
-            System.out.println("\n1. Ver catálogo de productos\n2. Añadir producto al carrito\n3. Ver carrito\n" +
-                    "4. Actualizar cantidad\n5. Eliminar producto\n6. Cerrar pedido\n7. Cancelar pedido\n8. Ver orden\n9. Salir");
+            System.out.println("\n=== MENÚ PRINCIPAL ===");
+            System.out.println("1. Ver catálogo de productos");
+            System.out.println("2. Añadir producto al carrito");
+            System.out.println("3. Ver carrito de compras");
+            System.out.println("4. Actualizar cantidad de un producto");
+            System.out.println("5. Eliminar producto del carrito");
+            System.out.println("6. Cerrar pedido (checkout)");
+            System.out.println("7. Cancelar pedido (vaciar carrito)");
+            System.out.println("8. Ver detalles de la orden");
+            System.out.println("9. Salir");
 
-            int opcion;
-            // Se pide la opcion al usuario y se verifica que sea un numero entero válido
+            int opcion = 0;
             while (true){
                 try {
-                    System.out.print("Seleccione una opción (1-9): ");
+                    System.out.print("Seleccione una opción: ");
                     opcion = scanner.nextInt();
                     scanner.nextLine(); // Consumir el salto de línea
-
-                    // Validar que la opción esté en el rango válido
-                    if (opcion >= 1 && opcion <= 9) {
-                        break; // Salir del bucle si la entrada es válida
-                    } else {
-                        System.out.println("Opción no válida. Por favor seleccione un número entre 1 y 9.");
-                    }
+                    break; // Salir del bucle si la entrada es válida
                 } catch (Exception e) {
                     System.out.println("Entrada inválida. Por favor ingrese un número.");
                     scanner.nextLine(); // Limpiar el buffer del scanner
                 }
             }
-
+            
             switch (opcion) {
                 case 1:
-                    System.out.println("\nCatálogo de productos disponibles:");
-                    productCatalogUseCase.getProductList().forEach(p ->
-                            System.out.println(p.getId() + ". " + p.getName() + " - Categoría: " + p.getCategory() + " - $" + p.getPrice())
+                    // Ver catálogo de productos
+                    System.out.println("\n=== CATÁLOGO DE PRODUCTOS ===");
+                    System.out.println("ID | Nombre | Categoría | Precio | Stock");
+                    System.out.println("----------------------------------------");
+                    productCatalogUseCase.getProductList().forEach(p -> 
+                        System.out.println(p.getId() + " | " + p.getName() + " | " + 
+                                          p.getCategory() + " | $" + p.getPrice() + " | " + p.getStock())
                     );
                     break;
-
+                    
                 case 2:
-                    if (orderClosed) {
-                        System.out.println("No se pueden agregar productos. El pedido ya está cerrado.");
+                    // Añadir producto al carrito
+                    System.out.print("Ingrese ID del producto: ");
+                    String productId = scanner.nextLine();
+                    
+                    // Validar que el ID sea válido
+                    try {
+                        Integer.parseInt(productId);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Error: ID de producto inválido.");
                         break;
                     }
-
-                    int productId;
-                    // Validación del ID del producto con try-catch
-                    while (true) {
-                        try {
-                            System.out.print("Ingrese ID del producto (1-15): ");
-                            String input = scanner.nextLine();
-                            productId = Integer.parseInt(input);
-
-                            if (productId >= 1 && productId <= 15) {
-                                // Verificar que el producto existe
-                                if (productCatalogUseCase.getProductById(String.valueOf(productId)) != null) {
-                                    break; // ID válido y producto existe
-                                } else {
-                                    System.out.println("El producto con ID " + productId + " no existe.");
-                                }
-                            } else {
-                                System.out.println("El ID debe estar entre 1 y 15.");
-                            }
-                        } catch (NumberFormatException e) {
-                            System.out.println("Solo puede ingresar un número entero válido.");
-                        }
-                    }
-
+                    
+                    System.out.print("Ingrese cantidad: ");
                     int quantity;
-                    // Validación de la cantidad con try-catch
-                    while (true) {
-                        try {
-                            System.out.print("Ingrese cantidad: ");
-                            String quantityInput = scanner.nextLine();
-                            quantity = Integer.parseInt(quantityInput);
-
-                            if (quantity >= 1) {
-                                break; // Cantidad válida
-                            } else {
-                                System.out.println("La cantidad debe ser mayor o igual a 1.");
-                            }
-                        } catch (NumberFormatException e) {
-                            System.out.println("Solo puede ingresar un número entero válido.");
+                    try {
+                        quantity = scanner.nextInt();
+                        scanner.nextLine(); // Consumir salto de línea
+                        
+                        // Validar que la cantidad sea mayor a 0
+                        if (quantity <= 0) {
+                            System.out.println("Error: La cantidad debe ser mayor a 0.");
+                            break;
                         }
+                    } catch (Exception e) {
+                        System.out.println("Error: Cantidad inválida.");
+                        scanner.nextLine(); // Limpiar buffer
+                        break;
                     }
-
-                    shoppingCartUseCase.addProductToCart(String.valueOf(productId), quantity);
-                    System.out.println("Producto añadido al carrito.");
-                    break;
-
-                case 3:
-                    if (shoppingCartUseCase.viewCart().isEmpty()) {
-                        System.out.println("\nEl carrito está vacío.");
+                    
+                    boolean added = shoppingCartUseCase.addProductToCart(productId, quantity);
+                    if (added) {
+                        System.out.println("Producto añadido al carrito correctamente.");
                     } else {
-                        System.out.println("\nCarrito actual:");
-                        shoppingCartUseCase.viewCart().getItems().forEach(item ->
-                                System.out.println(item.getProduct().getName() + " - Cantidad: " +
-                                        item.getQuantity() + " - Subtotal: $" + item.getSubtotal())
+                        System.out.println("Error: No se pudo añadir el producto. Verifique ID y stock disponible.");
+                    }
+                    break;
+                    
+                case 3:
+                    // Ver carrito de compras
+                    System.out.println("\n=== CARRITO DE COMPRAS ===");
+                    if (shoppingCartUseCase.viewCart().getItems().isEmpty()) {
+                        System.out.println("El carrito está vacío.");
+                    } else {
+                        System.out.println("Producto | Cantidad | Precio Unitario | Subtotal");
+                        System.out.println("------------------------------------------------");
+                        shoppingCartUseCase.viewCart().getItems().forEach(item -> 
+                            System.out.println(item.getProduct().getName() + " | " + 
+                                              item.getQuantity() + " | $" + 
+                                              item.getProduct().getPrice() + " | $" + 
+                                              item.getSubtotal())
                         );
+                        System.out.println("------------------------------------------------");
                         System.out.println("Total: $" + shoppingCartUseCase.viewCart().getTotalAmount());
                     }
                     break;
-
+                    
                 case 4:
-                    if (orderClosed) {
-                        System.out.println("No se puede actualizar el carrito. El pedido ya está cerrado.");
+                    // Actualizar cantidad de un producto
+                    System.out.print("Ingrese ID del producto: ");
+                    String updateId = scanner.nextLine();
+                    
+                    // Validar que el ID sea válido
+                    try {
+                        Integer.parseInt(updateId);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Error: ID de producto inválido.");
                         break;
                     }
-
-                    if (shoppingCartUseCase.viewCart().isEmpty()) {
-                        System.out.println("El carrito está vacío. No hay productos para actualizar.");
-                        break;
-                    }
-
-                    int updateProductId;
-                    // Validación del ID para actualizar
-                    while (true) {
-                        try {
-                            System.out.print("Ingrese ID del producto a actualizar (1-15): ");
-                            String updateInput = scanner.nextLine();
-                            updateProductId = Integer.parseInt(updateInput);
-
-                            if (updateProductId >= 1 && updateProductId <= 15) {
-                                if (productCatalogUseCase.getProductById(String.valueOf(updateProductId)) != null) {
-                                    break;
-                                } else {
-                                    System.out.println("El producto con ID " + updateProductId + " no existe.");
-                                }
-                            } else {
-                                System.out.println("El ID debe estar entre 1 y 15.");
-                            }
-                        } catch (NumberFormatException e) {
-                            System.out.println("Solo puede ingresar un número entero válido.");
-                        }
-                    }
-
+                    
+                    System.out.print("Ingrese nueva cantidad: ");
                     int newQuantity;
-                    // Validación de la nueva cantidad
-                    while (true) {
-                        try {
-                            System.out.print("Ingrese nueva cantidad: ");
-                            String newQuantityInput = scanner.nextLine();
-                            newQuantity = Integer.parseInt(newQuantityInput);
-
-                            if (newQuantity >= 0) {
-                                break;
-                            } else {
-                                System.out.println("La cantidad debe ser mayor o igual a 0.");
+                    try {
+                        newQuantity = scanner.nextInt();
+                        scanner.nextLine(); // Consumir salto de línea
+                        
+                        // Si la cantidad es 0, preguntar si desea eliminar
+                        if (newQuantity == 0) {
+                            System.out.print("¿Desea eliminar el producto del carrito? (s/n): ");
+                            String respuesta = scanner.nextLine();
+                            if (respuesta.equalsIgnoreCase("s")) {
+                                boolean removed = shoppingCartUseCase.removeItem(updateId);
+                                if (removed) {
+                                    System.out.println("Producto eliminado del carrito.");
+                                } else {
+                                    System.out.println("Error: No se pudo eliminar el producto.");
+                                }
                             }
-                        } catch (NumberFormatException e) {
-                            System.out.println("Solo puede ingresar un número entero válido.");
+                            break;
                         }
+                        
+                        // Validar que la cantidad sea mayor a 0
+                        if (newQuantity < 0) {
+                            System.out.println("Error: La cantidad debe ser mayor o igual a 0.");
+                            break;
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Error: Cantidad inválida.");
+                        scanner.nextLine(); // Limpiar buffer
+                        break;
                     }
-
-                    shoppingCartUseCase.updateQuantity(String.valueOf(updateProductId), newQuantity);
-                    if (newQuantity == 0) {
+                    
+                    boolean updated = shoppingCartUseCase.updateQuantity(updateId, newQuantity);
+                    if (updated) {
+                        System.out.println("Cantidad actualizada correctamente.");
+                    } else {
+                        System.out.println("Error: No se pudo actualizar la cantidad. Verifique ID y stock disponible.");
+                    }
+                    break;
+                    
+                case 5:
+                    // Eliminar producto del carrito
+                    System.out.print("Ingrese ID del producto a eliminar: ");
+                    String removeId = scanner.nextLine();
+                    
+                    boolean removed = shoppingCartUseCase.removeItem(removeId);
+                    if (removed) {
                         System.out.println("Producto eliminado del carrito.");
                     } else {
-                        System.out.println("Cantidad actualizada.");
+                        System.out.println("Error: No se pudo eliminar el producto. Verifique que exista en el carrito.");
                     }
                     break;
-
-                case 5:
-                    if (orderClosed) {
-                        System.out.println("No se puede modificar el carrito. El pedido ya está cerrado.");
+                    
+                case 6:
+                    // Cerrar pedido (checkout)
+                    if (shoppingCartUseCase.viewCart().getItems().isEmpty()) {
+                        System.out.println("Error: No se puede cerrar un pedido con el carrito vacío.");
                         break;
                     }
-
-                    if (shoppingCartUseCase.viewCart().isEmpty()) {
-                        System.out.println("El carrito está vacío. No hay productos para eliminar.");
-                        break;
-                    }
-
-                    int removeProductId;
-                    // Validación del ID para eliminar
-                    while (true) {
-                        try {
-                            System.out.print("Ingrese ID del producto a eliminar (1-15): ");
-                            String removeInput = scanner.nextLine();
-                            removeProductId = Integer.parseInt(removeInput);
-
-                            if (removeProductId >= 1 && removeProductId <= 15) {
-                                if (productCatalogUseCase.getProductById(String.valueOf(removeProductId)) != null) {
-                                    break;
-                                } else {
-                                    System.out.println("El producto con ID " + removeProductId + " no existe.");
-                                }
-                            } else {
-                                System.out.println("El ID debe estar entre 1 y 15.");
-                            }
-                        } catch (NumberFormatException e) {
-                            System.out.println("Solo puede ingresar un número entero válido.");
-                        }
-                    }
-
-                    shoppingCartUseCase.removeItem(String.valueOf(removeProductId));
-                    System.out.println("Producto eliminado del carrito.");
-                    break;
-
-                case 6: // Cerrar pedido
-                    if (orderClosed) {
-                        System.out.println("Ya existe un pedido cerrado. Use la opción 'Cancelar pedido' primero si desea crear uno nuevo.");
-                        break;
-                    }
-
-                    // Validar que existan productos en el carrito
-                    if (shoppingCartUseCase.viewCart().isEmpty()) {
-                        System.out.println("No se puede cerrar el pedido. El carrito está vacío.");
-                        break;
-                    }
-
+                    
                     Order newOrder = orderUseCase.createOrder();
-                    currentOrderId = newOrder.getOrderId();
-                    orderClosed = true;
-
-                    // Mostrar resumen completo del pedido
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-                    System.out.println("\nResumen del pedido:");
-                    System.out.println("ID del pedido: " + currentOrderId);
-                    System.out.println("Fecha/Hora: " + dateFormat.format(newOrder.getDate()));
-                    System.out.println("\nLista de ítems:");
-                    newOrder.getItems().forEach(item ->
-                            System.out.println("- " + item.getProduct().getName() +
-                                    " | Cantidad: " + item.getQuantity() +
-                                    " | Precio unitario: $" + item.getProduct().getPrice() +
-                                    " | Subtotal: $" + item.getSubtotal())
-                    );
-                    System.out.println("\nTotal antes de descuento: $" + newOrder.getSubtotal());
-                    System.out.println("Descuento aplicado: $" + newOrder.getDiscount());
-                    System.out.println("TOTAL FINAL: $" + newOrder.getFinalTotal());
-
-                    // Vaciar el carrito después del cierre
-                    shoppingCartUseCase.clearCart();
-                    System.out.println("\nPedido cerrado exitosamente. El carrito ha sido vaciado.");
-                    break;
-
-                case 7: // Cancelar pedido
-                    if (!orderClosed) {
-                        // Si no hay pedido cerrado, solo vaciar el carrito
-                        if (shoppingCartUseCase.viewCart().isEmpty()) {
-                            System.out.println("No hay pedido para cancelar. El carrito ya está vacío.");
-                        } else {
-                            shoppingCartUseCase.clearCart();
-                            System.out.println("Carrito vaciado.");
-                        }
+                    if (newOrder != null) {
+                        currentOrderId = newOrder.getOrderId();
+                        orderClosed = true;
+                        
+                        System.out.println("\n=== RESUMEN DEL PEDIDO ===");
+                        System.out.println("ID de Pedido: " + newOrder.getOrderId());
+                        System.out.println("Fecha: " + newOrder.getDate());
+                        System.out.println("\nProductos:");
+                        System.out.println("ID | Nombre | Cantidad | Precio Unitario | Subtotal");
+                        System.out.println("----------------------------------------------------");
+                        
+                        newOrder.getItems().forEach(item -> 
+                            System.out.println(item.getProduct().getId() + " | " + 
+                                             item.getProduct().getName() + " | " + 
+                                             item.getQuantity() + " | $" + 
+                                             item.getProduct().getPrice() + " | $" + 
+                                             item.getSubtotal())
+                        );
+                        
+                        System.out.println("----------------------------------------------------");
+                        System.out.println("Subtotal: $" + newOrder.getSubtotal());
+                        System.out.println("Descuento: $" + newOrder.getDiscount());
+                        System.out.println("Total Final: $" + newOrder.getFinalTotal());
+                        
+                        // Vaciar el carrito después del cierre
+                        orderUseCase.clearCartAfterOrder();
+                        System.out.println("\nEl carrito ha sido vaciado. ¡Gracias por su compra!");
                     } else {
-                        // Si hay un pedido cerrado, permitir cancelarlo
-                        orderClosed = false;
-                        currentOrderId = null;
-                        shoppingCartUseCase.clearCart();
-                        System.out.println("Pedido cancelado. Puede crear un nuevo pedido.");
+                        System.out.println("Error: No se pudo crear la orden.");
                     }
                     break;
-
-                case 8: // Ver orden
-                    if (currentOrderId != null && orderClosed) {
+                    
+                case 7:
+                    // Cancelar pedido (vaciar carrito)
+                    if (orderClosed) {
+                        System.out.println("Error: No es posible cancelar un pedido que ya fue cerrado.");
+                    } else {
+                        boolean cleared = shoppingCartUseCase.clearCart();
+                        if (cleared) {
+                            System.out.println("Pedido cancelado. El carrito ha sido vaciado.");
+                        } else {
+                            System.out.println("Error: No se pudo vaciar el carrito.");
+                        }
+                    }
+                    break;
+                    
+                case 8:
+                    // Ver detalles de la orden
+                    if (currentOrderId != null) {
                         Order order = orderUseCase.getOrder(currentOrderId);
                         if (order != null) {
-                            SimpleDateFormat dateFormat2 = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-                            System.out.println("\nDetalles del pedido:");
-                            System.out.println("ID del pedido: " + currentOrderId);
-                            System.out.println("Fecha/Hora: " + dateFormat2.format(order.getDate()));
+                            System.out.println("\n=== DETALLES DE LA ORDEN ===");
+                            System.out.println("ID de Pedido: " + order.getOrderId());
+                            System.out.println("Fecha: " + order.getDate());
                             System.out.println("\nProductos:");
-                            order.getItems().forEach(item ->
-                                    System.out.println("- " + item.getProduct().getName() +
-                                            " | Cantidad: " + item.getQuantity() +
-                                            " | Subtotal: $" + item.getSubtotal())
+                            System.out.println("Nombre | Cantidad | Precio Unitario | Subtotal");
+                            System.out.println("--------------------------------------------");
+                            
+                            order.getItems().forEach(item -> 
+                                System.out.println(item.getProduct().getName() + " | " + 
+                                                 item.getQuantity() + " | $" + 
+                                                 item.getProduct().getPrice() + " | $" + 
+                                                 item.getSubtotal())
                             );
-                            System.out.println("\nSubtotal: $" + order.getSubtotal());
+                            
+                            System.out.println("--------------------------------------------");
+                            System.out.println("Subtotal: $" + order.getSubtotal());
                             System.out.println("Descuento: $" + order.getDiscount());
-                            System.out.println("Total final: $" + order.getFinalTotal());
+                            System.out.println("Total Final: $" + order.getFinalTotal());
                         } else {
-                            System.out.println("No se encontró la orden.");
+                            System.out.println("Error: No se encontró la orden.");
                         }
                     } else {
-                        System.out.println("No hay pedido cerrado para mostrar.");
+                        System.out.println("No hay orden creada aún.");
                     }
                     break;
-
+                    
                 case 9:
+                    // Salir
                     activo = false;
                     System.out.println("¡Gracias por usar nuestro carrito de compras!");
                     break;
-
+                    
                 default:
                     System.out.println("Opción no válida.");
             }
         }
-
+        
         scanner.close();
     }
 }

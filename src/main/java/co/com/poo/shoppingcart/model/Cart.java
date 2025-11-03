@@ -40,6 +40,23 @@ public class Cart {
         calculateTotal();
     }
 
+    /**
+     * Busca un item en el carrito por su ID de producto
+     * @param productId ID del producto a buscar
+     * @return El CartItem si existe, null si no se encuentra
+     */
+    public CartItem findItem(String productId) {
+        try {
+            Integer id = Integer.parseInt(productId);
+            return items.stream()
+                    .filter(item -> item.getProductId().equals(id))
+                    .findFirst()
+                    .orElse(null);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     public Double calculateTotal() {
         totalAmount = items.stream()
                 .mapToDouble(i -> i.getPrice() * i.getQuantity())
