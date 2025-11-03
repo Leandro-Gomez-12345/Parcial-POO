@@ -11,7 +11,7 @@ public class OrderUseCase {
     private final Map<String, Order> orders; // Almacenamiento interno de órdenes
     
     // Constantes para la regla de descuento
-    private static final double DISCOUNT_THRESHOLD = 100000.0;
+    private static final double DISCOUNT_THRESHOLD = 100000.0; // Cantidad mínima para aplicar descuento
     private static final double DISCOUNT_PERCENTAGE = 0.05; // 5%
 
     public OrderUseCase(CartRepository cartRepository) {
